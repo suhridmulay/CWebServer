@@ -133,6 +133,19 @@ int enqueue(struct linked_list list, struct request_record r)
     return list.size;
 }
 
+struct request_record dequeue(struct linked_list * list) {
+    struct request_record r;
+    if (list->head == NULL) {
+        return (struct request_record) {-1, NULL, 0};
+    }
+    struct list_node * old_head = list->head;
+    list->head = list->head->next;
+    r = old_head->req;
+    free(old_head);
+    list->size--;
+    return r;
+}
+
 //
 // Sends out HTTP response in case of errors
 //

@@ -3,9 +3,135 @@
 
 #define MAXBUF (8192)
 
+/* Code to queue of requests */
+
+// Structure stores information about a request
+struct request_record
+{
+    // File descriptor of connection
+    int fd;
+    // Relative path of the file
+    char *filepath;
+    // Size of the file
+    int filesize;
+};
+
+struct request_record new_request_record(int fd, char *path, int fsize)
+{
+    struct request_record new_record;
+    new_record.fd = fd;
+    new_record.filepath = strdup(path);
+    new_record.filesize = fsize;
+    return new_record;
+}
+
+// Structure for a node in linked list
+struct list_node
+{
+    // Stores a request body
+    struct request_record req;
+    // Pointer to next node
+    struct list_node *next;
+};
+
+struct list_node new_node(struct request_record r)
+{
+    struct list_node ln;
+    ln.req = r;
+    ln.next = NULL;
+}
+
+enum list_type
+{
+    FIFO,
+    SFF
+};
+
+struct linked_list
+{
+    // Stores the type of linked list
+    // Whether sorted or naive
+    enum list_type lltype;
+    // Pointet to the head of the list
+    struct list_node *head;
+    // Size of the linked list
+    int size;
+};
+
 //
 //	TODO: add code to create and manage the buffer
 //
+
+// Creates a new blank linked list
+struct linked_list new_queue(enum list_type ltype)
+{
+    struct linked_list rlist;
+    rlist.head = NULL;
+    rlist.lltype = ltype;
+    rlist.size = 0;
+    return rlist;
+}
+
+int enqueue(struct linked_list list, struct request_record r)
+{
+    if (list.head == NULL)
+    {
+        list.head = malloc(sizeof(struct list_node));
+        list.head->req = r;
+        list.head->next = NULL;
+    }
+    else
+    {   
+        // If the type of list is SFF
+        if (list.lltype == SFF)
+        {   
+            // Iterate to a suitable position
+            struct list_node *iter = list.head;
+            // Move forward until we reach a filesize greater than equal to specified
+            // OR
+            // Move forward until the end of the list
+            while (iter->next != NULL && iter->req.filesize < r.filesize)
+            {
+                iter = iter->next;
+            }
+            // If we have reached the end of the list
+            if (iter->next == NULL)
+            {
+                // Create a new node and attach it at the end
+                iter->next = malloc(sizeof(struct list_node));
+                iter->next->req = r;
+                iter->next->next = NULL;
+            }
+            // Otherwise
+            else
+            {   
+                //  Insert a new node in the list
+                struct list_node * old_next = iter->next;
+                iter->next = malloc(sizeof(struct list_node));
+                iter->next->req = r;
+                iter->next->next = old_next;
+            }
+        }
+        // If the list is naive FIFO
+        else
+        {
+            // Iterate to the end of the list
+            struct list_node * iter = list.head;
+            while(iter->next != NULL) 
+            {
+                iter = iter->next;
+            }
+            // Create a new node at the end
+            iter->next = malloc(sizeof(struct list_node));
+            iter->next->req = r;
+            iter->next->next = NULL;
+        }
+    }
+    // Increment the list size
+    list.size++;
+    // Return the incremented size
+    return list.size;
+}
 
 //
 // Sends out HTTP response in case of errors

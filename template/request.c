@@ -72,21 +72,21 @@ struct linked_list new_queue(enum list_type ltype)
     return rlist;
 }
 
-int enqueue(struct linked_list list, struct request_record r)
+int enqueue(struct linked_list * list, struct request_record r)
 {
-    if (list.head == NULL)
+    if (list->head == NULL)
     {
-        list.head = malloc(sizeof(struct list_node));
-        list.head->req = r;
-        list.head->next = NULL;
+        list->head = malloc(sizeof(struct list_node));
+        list->head->req = r;
+        list->head->next = NULL;
     }
     else
     {   
         // If the type of list is SFF
-        if (list.lltype == SFF)
+        if (list->lltype == SFF)
         {   
             // Iterate to a suitable position
-            struct list_node *iter = list.head;
+            struct list_node *iter = list->head;
             // Move forward until we reach a filesize greater than equal to specified
             // OR
             // Move forward until the end of the list
@@ -116,7 +116,7 @@ int enqueue(struct linked_list list, struct request_record r)
         else
         {
             // Iterate to the end of the list
-            struct list_node * iter = list.head;
+            struct list_node * iter = list->head;
             while(iter->next != NULL) 
             {
                 iter = iter->next;
@@ -128,9 +128,9 @@ int enqueue(struct linked_list list, struct request_record r)
         }
     }
     // Increment the list size
-    list.size++;
+    list->size++;
     // Return the incremented size
-    return list.size;
+    return list->size;
 }
 
 struct request_record dequeue(struct linked_list * list) {

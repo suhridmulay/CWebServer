@@ -72,7 +72,7 @@ struct linked_list new_queue(enum list_type ltype)
     return rlist;
 }
 
-int enqueue(struct linked_list * list, struct request_record r)
+int enqueue(struct linked_list *list, struct request_record r)
 {
     if (list->head == NULL)
     {
@@ -81,10 +81,10 @@ int enqueue(struct linked_list * list, struct request_record r)
         list->head->next = NULL;
     }
     else
-    {   
+    {
         // If the type of list is SFF
         if (list->lltype == SFF)
-        {   
+        {
             // Iterate to a suitable position
             struct list_node *iter = list->head;
             // Move forward until we reach a filesize greater than equal to specified
@@ -104,9 +104,9 @@ int enqueue(struct linked_list * list, struct request_record r)
             }
             // Otherwise
             else
-            {   
+            {
                 //  Insert a new node in the list
-                struct list_node * old_next = iter->next;
+                struct list_node *old_next = iter->next;
                 iter->next = malloc(sizeof(struct list_node));
                 iter->next->req = r;
                 iter->next->next = old_next;
@@ -116,8 +116,8 @@ int enqueue(struct linked_list * list, struct request_record r)
         else
         {
             // Iterate to the end of the list
-            struct list_node * iter = list->head;
-            while(iter->next != NULL) 
+            struct list_node *iter = list->head;
+            while (iter->next != NULL)
             {
                 iter = iter->next;
             }
@@ -133,12 +133,14 @@ int enqueue(struct linked_list * list, struct request_record r)
     return list->size;
 }
 
-struct request_record dequeue(struct linked_list * list) {
+struct request_record dequeue(struct linked_list *list)
+{
     struct request_record r;
-    if (list->head == NULL) {
-        return (struct request_record) {-1, NULL, 0};
+    if (list->head == NULL)
+    {
+        return (struct request_record){-1, NULL, 0};
     }
-    struct list_node * old_head = list->head;
+    struct list_node *old_head = list->head;
     list->head = list->head->next;
     r = old_head->req;
     free(old_head);

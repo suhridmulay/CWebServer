@@ -137,35 +137,59 @@ void request_handle(int fd)
     char buf[MAXBUF], method[MAXBUF], uri[MAXBUF], version[MAXBUF];
     char filename[MAXBUF], cgiargs[MAXBUF];
 
+    // Read the request from connection
     readline_or_die(fd, buf, MAXBUF);
+    // Parse the request for method, path and version
     sscanf(buf, "%s %s %s", method, uri, version);
+    // Print method, path and version to the screen
     printf("method:%s uri:%s version:%s\n", method, uri, version);
 
+    // If request is NOT of type GET
     if (strcasecmp(method, "GET"))
     {
+        // Raise error that methods are not supported
         request_error(fd, method, "501", "Not Implemented", "server does not implement this method");
         return;
     }
+    // Read and discard the rest of the information from the connection file
     request_read_headers(fd);
 
+    // If the requested file is a satic resource
     is_static = request_parse_uri(uri, filename, cgiargs);
+    // If the file exists in the current directory
+    // stat is a function that gets information about a file from a filename
+    // Function returns -1 on error
+    // If stat errors means that the file was not found
     if (stat(filename, &sbuf) < 0)
-    {
+    {   
+        // If the file was not found, raise a 404 exception
         request_error(fd, filename, "404", "Not found", "server could not find this file");
         return;
     }
 
+    // If the requested resource is a static file
     if (is_static)
-    {
+    {   
+        // If server does not have read permissions to the file or the file is not a regular file
         if (!(S_ISREG(sbuf.st_mode)) || !(S_IRUSR & sbuf.st_mode))
-        {
+        {   
+            // The resource is forbidden and won't be sent
+            // The request is thus closed
             request_error(fd, filename, "403", "Forbidden", "server could not read this file");
             return;
         }
+        // Otherwise, iff the resource can be shared
+        // Send the staic resource to connection
+        // fd: connection file descriptor
+        // filename: static file path to serve
+        // sbuf.st_size: if=s the size of the static file to be served
         request_serve_static(fd, filename, sbuf.st_size);
     }
+
+    // If the requested resource is NOT a static file
     else
-    {
+    {   
+        // Raise error that dynamic content is not implemented
         request_error(fd, filename, "501", "Not Implemented", "server does not serve dynamic content request");
         return;
     }

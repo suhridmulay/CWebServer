@@ -63,7 +63,7 @@ struct linked_list
 //
 
 // Creates a new blank linked list
-struct linked_list new_queue(enum list_type ltype)
+struct linked_list new_list(enum list_type ltype)
 {
     struct linked_list rlist;
     rlist.head = NULL;
@@ -135,18 +135,30 @@ int enqueue(struct linked_list *list, struct request_record r)
 
 struct request_record dequeue(struct linked_list *list)
 {
+    // Create a temporary store for record
     struct request_record r;
+    // If there is nothing on the list
     if (list->head == NULL)
     {
+        // Return a empty record
         return (struct request_record){-1, NULL, 0};
     }
+    // Store the old head of the list
     struct list_node *old_head = list->head;
+    // Switch head to next node
     list->head = list->head->next;
+    // Store request body into temporary variable
     r = old_head->req;
+    // Free the old head
     free(old_head);
+    // Decrement size of list
     list->size--;
+    // Return request body
     return r;
 }
+
+struct linked_list req_list_FIFO = (struct linked_list){FIFO, NULL, 0};
+struct linked_list req_list_SFF = (struct linked_list){SFF, NULL, 0};
 
 //
 // Sends out HTTP response in case of errors

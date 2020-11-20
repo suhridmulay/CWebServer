@@ -3,6 +3,8 @@
 
 #define MAXBUF (8192)
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* Code to queue of requests */
 
 // Structure stores information about a request
@@ -301,6 +303,17 @@ void request_serve_static(int fd, char *filename, int filesize)
 void *thread_request_serve_static(void *arg)
 {
     // TODO: write code to actualy respond to HTTP requests
+    pthread_mutex_lock(&mutex);
+    struct request_record f;
+    if (scheduling_algo == SFF) {
+        f = dequeue(&req_list_SFF);
+        while(f.fd < 0);
+    } else {
+        f = dequeue(&req_list_FIFO);
+        while(f.fd < 0);
+    }
+    pthread_mutex_unlock(&mutex);
+    request_serve_static(f.fd, f.filepath, f.filesize);
 }
 
 //
@@ -346,6 +359,14 @@ void request_handle(int fd)
         }
 
         // TODO: write code to add HTTP requests in the buffer based on the scheduling policy
+        struct request_record r = new_request_record(fd, strdup(filename), sbuf.st_size);
+        pthread_mutex_lock(&mutex);
+        if (scheduling_algo == SFF) {
+            enqueue(&req_list_SFF, r);
+        } else {
+            enqueue(&req_list_FIFO, r);
+        }
+        pthread_mutex_unlock(&mutex);
     }
     else
     {

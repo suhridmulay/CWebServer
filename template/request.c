@@ -4,6 +4,8 @@
 #define MAXBUF (8192)
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t cvl = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
 
 /* Code to queue of requests */
 
@@ -304,16 +306,18 @@ void request_serve_static(int fd, char *filename, int filesize)
 void *thread_request_serve_static(void *arg)
 {
     // TODO: write code to actualy respond to HTTP requests
+    printf("Waiting on condition\n");
+    pthread_cond_wait(&cv, &cvl);
+    printf("Waiting to lock queue\n");
     pthread_mutex_lock(&mutex);
     struct request_record f;
     if (scheduling_algo == SFF) {
         f = dequeue(&req_list_SFF);
-        while(f.fd < 0);
     } else {
         f = dequeue(&req_list_FIFO);
-        while(f.fd < 0);
     }
     pthread_mutex_unlock(&mutex);
+    printf("Serving request\n");
     request_serve_static(f.fd, f.filepath, f.filesize);
     return NULL;
 }
@@ -362,13 +366,19 @@ void request_handle(int fd)
 
         // TODO: write code to add HTTP requests in the buffer based on the scheduling policy
         struct request_record r = new_request_record(fd, strdup(filename), sbuf.st_size);
+        printf("Waiting for lock on queue\n");
         pthread_mutex_lock(&mutex);
         if (scheduling_algo == SFF) {
             enqueue(&req_list_SFF, r);
         } else {
             enqueue(&req_list_FIFO, r);
         }
+        printf("Queued request for file: %s\n", filename);
+        printf("Signalling condition variable\n");
+        pthread_cond_signal(&cv);
+        printf("Releasing lock for mutex\n");
         pthread_mutex_unlock(&mutex);
+        printf("Lock mutex released\n");
     }
     else
     {

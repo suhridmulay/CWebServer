@@ -41,6 +41,7 @@ struct list_node new_node(struct request_record r)
     struct list_node ln;
     ln.req = r;
     ln.next = NULL;
+    return ln;
 }
 
 enum list_type
@@ -314,6 +315,7 @@ void *thread_request_serve_static(void *arg)
     }
     pthread_mutex_unlock(&mutex);
     request_serve_static(f.fd, f.filepath, f.filesize);
+    return NULL;
 }
 
 //
